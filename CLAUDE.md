@@ -25,32 +25,35 @@
 
 ```
 .
-├── .claude/                    # Claude Code 設定・カスタム命令
+├── .claude/                    # Claude Code 設定・スキル・MCP 設定
+│   ├── commands/               # Claude Code スラッシュコマンド（実行可能スキル）
+│   ├── settings.json           # MCP サーバー設定（プロジェクトレベル）
+│   └── settings.local.json     # ローカル固有設定（git 管理外）
 ├── .codex/                     # Codex 設定・カスタム命令
+├── agent-skills/               # 全エージェント共通スキルライブラリ
+│   ├── common/                 # 共通テンプレート（プラン・レビュー・コミット等）
+│   ├── claudecode/             # Claude Code 向け適用ガイド
+│   ├── codex/                  # Codex 向け適用ガイド
+│   ├── copilot/                # GitHub Copilot 向け適用ガイド
+│   └── kiro/                   # AWS Kiro 向け適用ガイド
 ├── plan/                       # 実装計画・設計ドキュメント
-│   ├── claudecode/             # Claude Code 用プラン
-│   ├── codex/                  # Codex 用プラン
-│   ├── copilot/                # GitHub Copilot 用プラン
-│   └── kiro/                   # AWS Kiro 用プラン
+│   ├── claudecode/
+│   ├── codex/
+│   ├── copilot/
+│   └── kiro/
 ├── prompt/                     # プロンプトテンプレート集
 │   ├── claudecode/
-│   │   ├── knowledge/          # ドメイン知識・前提情報
-│   │   ├── howto/              # 手順・操作ガイド
-│   │   ├── input/              # 入力プロンプトテンプレート
-│   │   ├── output/             # 出力フォーマット定義
-│   │   ├── working/            # 作業中・一時プロンプト
-│   │   └── review/             # レビュー・検証プロンプト
-│   ├── codex/                  # (同上、Codex 用)
-│   ├── copilot/                # (同上、GitHub Copilot 用)
-│   └── kiro/                   # (同上、AWS Kiro 用)
+│   │   ├── knowledge/
+│   │   ├── howto/
+│   │   ├── input/
+│   │   ├── output/
+│   │   ├── working/
+│   │   └── review/
+│   ├── codex/                  # (同上)
+│   ├── copilot/                # (同上)
+│   └── kiro/                   # (同上)
 ├── exampleDocs/                # サンプルドキュメント
-│   ├── excel/
-│   ├── html/
-│   ├── markdown/
-│   ├── mermaid/
-│   ├── pdf/
-│   ├── ppt/
-│   └── word/
+│   ├── excel/ / html/ / markdown/ / mermaid/ / pdf/ / ppt/ / word/
 └── .tmp/                       # 一時作業ディレクトリ（git 管理外）
 ```
 
@@ -59,41 +62,16 @@
 ## ファイル命名規則
 
 ### plan/
-
 ```
 plan/{agent}/plan-{agent}-{YYYYMMDD}-{name}.md
 ```
-
-| 要素 | 説明 |
-|---|---|
-| `{agent}` | エージェント ID（`claudecode` / `codex` / `copilot` / `kiro`） |
-| `{YYYYMMDD}` | 作成日（例: `20260324`） |
-| `{name}` | 内容を表す短い名前（英数字・ハイフン、例: `auth-refactor`） |
-
-**例:**
-```
-plan/claudecode/plan-claudecode-20260324-auth-refactor.md
-plan/kiro/plan-kiro-20260324-api-design.md
-```
+例: `plan/claudecode/plan-claudecode-20260324-auth-refactor.md`
 
 ### prompt/
-
 ```
 prompt/{agent}/{category}/prompt-{agent}-{YYYYMMDD}-{name}.md
 ```
-
-| 要素 | 説明 |
-|---|---|
-| `{agent}` | エージェント ID |
-| `{category}` | `knowledge` / `howto` / `input` / `output` / `working` / `review` |
-| `{YYYYMMDD}` | 作成日 |
-| `{name}` | 内容を表す短い名前 |
-
-**例:**
-```
-prompt/claudecode/input/prompt-claudecode-20260324-generate-er-diagram.md
-prompt/copilot/review/prompt-copilot-20260324-code-review-checklist.md
-```
+例: `prompt/claudecode/input/prompt-claudecode-20260324-generate-er-diagram.md`
 
 ---
 
@@ -106,7 +84,21 @@ prompt/copilot/review/prompt-copilot-20260324-code-review-checklist.md
 - 計画ドキュメントは `plan/claudecode/` に命名規則に従って保存する
 - Plan の内容は実装前に明確にし、曖昧なまま進めない
 
-### 2. Agent Teams（専門職エージェント）の活用
+### 2. ブランチ戦略（Claude Code 作業時必須）
+
+- **Claude Code で作業を行う際は、必ず専用ブランチを作成してから開始すること**
+- ブランチ命名規則:
+  ```
+  ai-claudecode/{作業内容を表す英単語}
+  ```
+  例: `ai-claudecode/add-mcp-config` / `ai-claudecode/refactor-auth` / `ai-claudecode/fix-typo`
+- `{作業内容}` は内容が一目でわかる英単語・句を選ぶ（ハイフン区切り、小文字）
+- 作業完了後は **Pull Request を作成してユーザーに承認を求める**（直接 main にマージしない）
+- PR には変更内容・理由・確認ポイントを明記する
+
+> **スラッシュコマンド**: `/new-branch` で対話的にブランチを作成できる（`.claude/commands/new-branch.md` 参照）
+
+### 3. Agent Teams（専門職エージェント）の活用
 
 - 専門的な作業は専門エージェントに委任する（Claude Code の `Agent` ツール使用）
 - 推奨エージェント割り当て:
@@ -115,15 +107,53 @@ prompt/copilot/review/prompt-copilot-20260324-code-review-checklist.md
   - `general-purpose` エージェント: 複数ステップの調査・実装タスク
 - 独立した並行タスクは複数エージェントを同時起動して効率化する
 
-### 3. タスク進捗管理
+### 4. タスク進捗管理
 
 - 3 ステップ以上の作業は必ず `TodoWrite` ツールでタスクリストを作成する
 - タスク完了直後に `completed` に更新する（まとめて更新しない）
 - 同時に `in_progress` にできるタスクは 1 つのみ
 - タスクが不要になったらリストから削除する
 
-### 4. その他
+### 5. スキル・MCP の活用方針
+
+- **作業前に利用可能なスキル（`.claude/commands/`）と MCP サービスを確認する**
+- 定型作業はスキルを呼び出して実施する（例: `/new-branch`, `/plan-pr`, `/commit`）
+- MCP サービスは `.claude/settings.json` で管理。使うたびに追加・充実させていく
+- 新しいスキルのテンプレートは `agent-skills/common/` に追加し、各エージェント向け実装は `agent-skills/{agent}/` に配置する
+- Claude Code 固有のスラッシュコマンドは `.claude/commands/` に追加する
+
+### 6. その他
 
 - サンプルファイルを追加する際は対応するフォーマットのディレクトリ（`exampleDocs/` 配下）に配置する
-- `.tmp/` はコミットしない
+- `.tmp/` および `settings.local.json` はコミットしない
 - `prompt/*/working/` の一時プロンプトは完成後に適切なカテゴリへ移動する
+
+---
+
+## MCP サービス一覧
+
+`.claude/settings.json` で設定。詳細は同ファイルのコメントを参照。
+
+| サービス | パッケージ | 用途 |
+|---|---|---|
+| filesystem | `@modelcontextprotocol/server-filesystem` | ローカルファイル操作 |
+| github | `@modelcontextprotocol/server-github` | GitHub API（Issue/PR/Repo） |
+| fetch | `@modelcontextprotocol/server-fetch` | Web ページ取得 |
+| memory | `@modelcontextprotocol/server-memory` | 会話横断の永続メモリ |
+| brave-search | `@modelcontextprotocol/server-brave-search` | Web 検索 |
+| postgres | `@modelcontextprotocol/server-postgres` | PostgreSQL 操作 |
+| slack | `@modelcontextprotocol/server-slack` | Slack 連携 |
+| playwright | `@modelcontextprotocol/server-playwright` | ブラウザ自動化・スクレイピング |
+
+---
+
+## スキル一覧（Claude Code スラッシュコマンド）
+
+`.claude/commands/` に定義。
+
+| コマンド | 説明 |
+|---|---|
+| `/new-branch` | `ai-claudecode/{name}` ブランチを作成して作業開始 |
+| `/plan-pr` | Plan モードで計画→実装→PR 作成までの一連フロー |
+| `/commit` | コミットメッセージを生成してコミット |
+| `/review-pr` | PR の差分をレビュー |
